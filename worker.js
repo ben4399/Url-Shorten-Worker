@@ -1,14 +1,15 @@
 const config = {
-  result_page: false, // After get the value from KV, if use a page to show the result.
-  theme: "", // Homepage theme, use the empty value for default theme. To use urlcool theme, please fill with "theme/urlcool" .
-  cors: true, // Allow Cross-origin resource sharing for API requests.
-  unique_link: false, // If it is true, the same long url will be shorten into the same short url
-  custom_link: true, // Allow users to customize the short url.
-  overwrite_kv: false, // Allow user to overwrite an existed key.
-  snapchat_mode: false, // The link will be distroyed after access.
-  visit_count: false, // Count visit times.
-  load_kv: false, // Load all from Cloudflare KV
-  system_type: "shorturl", // shorturl, imghost, other types {pastebin, journal}
+  password: "", // 管理面板使用密码 // if password != null, then use this config; otherwise, read password from KV.
+  result_page: false, // 是否用特定的result页面来显示value // After get the value from KV, if use a page to show the result.
+  theme: "", // 管理面板的主题 // Homepage theme, use the empty value for default theme. To use urlcool theme, please fill with "theme/urlcool" .
+  cors: true, // 是否允许CORS使用API // Allow Cross-origin resource sharing for API requests.
+  unique_link: false, // 一个长链是否只有唯一的短链(会增加写入的使用量) // If it is true, the same long url will be shorten into the same short url
+  custom_link: true, // 允许自定义短链 // Allow users to customize the short url.
+  overwrite_kv: false, // 允许覆盖已存在的key // Allow user to overwrite an existed key.
+  snapchat_mode: false, // 短链只能访问一次(访问后就删除了) // The link will be distroyed after access.
+  visit_count: false, // 使用记数(会大大增加写入的使用量, 多人共用不推荐打开) // Count visit times.
+  load_kv: false, // 从KV加载全部数据(自用推荐打开, 多人共用会看到别人的数据) // Load all from Cloudflare KV
+  system_type: "shorturl", // 系统的功能定义 // shorturl, imghost, other types {pastebin, journal}
 }
 
 // key in protect_keylist can't read, add, del from UI and API
@@ -115,12 +116,24 @@ async function is_url_exist(url_sha512) {
   }
 }
 
+// 系统密码
+async function system_password() {
+  // 配置中的passoword为空 config.password is NULL
+  if (config.password.trim().length === 0 ) {    
+    // 查KV中的password对应的值 Query "password" in KV
+    return await LINKS.get("password");
+  }
+  else {
+    return config.password.trim();
+  }
+}
+
 async function handleRequest(request) {
   // console.log(request)
 
-  // 查KV中的password对应的值 Query "password" in KV
-  const password_value = await LINKS.get("password");
-
+  // 系统密码
+  const password_value  = await system_password();
+  
   /************************/
   // 以下是API接口的处理 Below is operation for API
 
@@ -294,11 +307,13 @@ async function handleRequest(request) {
   // 如果path为空, 即直接访问本worker
   // If visit this worker directly (no path)
   if (!path) {
-    return Response.redirect("https://zelikk.blogspot.com/search/label/Url-Shorten-Worker", 302)
-    /* new Response(html404, {
+    // return Response.redirect("https://zelikk.blogspot.com/search/label/Url-Shorten-Worker", 302)
+    // /* 
+    return new Response(html404, {
       headers: response_header,
       status: 404
-    }) */
+    }) 
+    // */
   }
 
   // 如果path符合password 显示操作页面index.html
