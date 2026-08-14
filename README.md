@@ -1,7 +1,7 @@
 # 演示
 短链系统 https://1way.eu.org/bodongshouqulveweifengci
 
-网络记事本 Pastebin https://pastebin.icdyct.cloudns.asia/tieludasiliqiuweiyue
+网络记事本 Pastebin https://pastebin.lvedong.eu.org/tieludasiliqiuweiyue
 
 图床 Image Hosting https://imghost.crazypeace.workers.dev/imghostimghost
 

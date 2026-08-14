@@ -1,8 +1,12 @@
-* {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   cursor: default;
+  box-sizing: border-box;
 }
+
 body {
   display: -webkit-box;
   display: flex;
@@ -13,43 +17,73 @@ body {
   vertical-align: center;
   flex-wrap: wrap;
   align-content: center;
+  min-height: 100vh;
 
   color: #2a2b2c;
   background-color: #ebedee;
 }
+
 img {
   width: auto;
   max-width: 100%;
 }
+
 .card {
   background-color: transparent;
   width: 768px;
+  max-width: 95vw;
 }
+
+.form-control,
+.list-group-item,
+.card-body,
+.input-group {
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
 .form-control {
   cursor: auto;
+  min-width: 0;
 }
+
 .img-thumbnail {
   max-height: 320px;
 }
+
 .list-group-item {
   font-family: "Source Code Pro", Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-@media (max-width: 769px) {
-  .card {
-    width: 80%;
-  }
+
+.list-group-item>.form-control {
+  min-height: 3em;
 }
+
+/* 让 input-group 中的按钮在极窄屏幕上可以换行 */
 @media (max-width: 420px) {
-  .card {
-    width: 95%;
+  .input-group {
+    flex-wrap: wrap;
+  }
+
+  .input-group>.btn {
+    flex: 0 0 auto;
   }
 }
-@media (prefers-color-scheme: dark) { 
+
+/* 响应式 iframe（YouTube 嵌入等） */
+iframe {
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+@media (prefers-color-scheme: dark) {
   body {
-    color: #d9d9d9; 
+    color: #d9d9d9;
     background: #1b1b1b;
   }
+
   .card {
     background-color: #252d38;
   }
-} 
+}

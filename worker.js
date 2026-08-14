@@ -17,6 +17,16 @@ const protect_keylist = [
   "password",
 ]
 
+// ====== R2 S3 API 配置 (文件保管站 file-r2 模式) ======
+// 以下变量推荐通过 Cloudflare 面板的环境变量(Variables)/加密机密(Secrets)注入, 作为全局变量自动可用
+// 注意: 面板中的变量名必须与代码完全一致(注意大小写敏感)
+// 偷懒也可以直接在这里赋值
+//   R2_ACCOUNT_ID        = "" // - R2 账户 ID (明文变量)
+//   R2_ACCESS_KEY_ID     = "" // - S3 API Access Key ID (建议设为加密 Secret)
+//   R2_SECRET_ACCESS_KEY = "" // - S3 API Secret Access Key (建议设为加密 Secret)
+//   R2_BUCKET_NAME       = "" // - R2 存储桶名称 (明文变量)
+//   R2_PUBLIC_URL        = "" // - R2 公开访问 URL, 如 https://pub-xxxx.r2.dev (明文变量)
+
 let index_html = "https://crazypeace.github.io/Url-Shorten-Worker/" + config.theme + "/index.html"
 let result_html = "https://crazypeace.github.io/Url-Shorten-Worker/" + config.theme + "/result.html"
 
@@ -32,6 +42,9 @@ const html404 = `<!DOCTYPE html>
 let response_header = {
   "Content-type": "text/html;charset=UTF-8;application/json",
 }
+let response_header_plain = {
+  "Content-type": "text/plain;charset=UTF-8;",
+}
 
 if (config.cors) {
   response_header = {
@@ -39,6 +52,11 @@ if (config.cors) {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST",
     "Access-Control-Allow-Headers": "Content-Type",
+  }
+  
+  response_header_plain = {
+  "Content-type": "text/plain;charset=UTF-8;",
+    "Access-Control-Allow-Origin": "*",
   }
 }
 
@@ -322,8 +340,16 @@ async function handleRequest(request) {
     let index = await fetch(index_html)
     index = await index.text()
     index = index.replace(/__PASSWORD__/gm, password_value)
-    // 操作页面文字修改
-    // index = index.replace(/短链系统变身/gm, "")
+    // 注入 R2 配置 (全局变量)
+    index = index.replace(/__R2_ACCOUNT_ID__/gm, (typeof R2_ACCOUNT_ID !== 'undefined') ? R2_ACCOUNT_ID : '')
+    index = index.replace(/__R2_ACCESS_KEY_ID__/gm, (typeof R2_ACCESS_KEY_ID !== 'undefined') ? R2_ACCESS_KEY_ID : '')
+    index = index.replace(/__R2_SECRET_ACCESS_KEY__/gm, (typeof R2_SECRET_ACCESS_KEY !== 'undefined') ? R2_SECRET_ACCESS_KEY : '')
+    index = index.replace(/__R2_BUCKET_NAME__/gm, (typeof R2_BUCKET_NAME !== 'undefined') ? R2_BUCKET_NAME : '')
+    index = index.replace(/__R2_PUBLIC_URL__/gm, (typeof R2_PUBLIC_URL !== 'undefined') ? R2_PUBLIC_URL : '')
+    if (!config.load_kv) {
+      index = index.replace(/onclick='loadR2ToKV\(\)'/gm, "onclick='' disabled")
+      index = index.replace(/onclick='loadKV\(\)'/gm, "onclick='' disabled")
+    }
     return new Response(index, {
       headers: response_header,
     })
@@ -397,9 +423,7 @@ async function handleRequest(request) {
   } else {
     // 如果只是一个单纯的key-value系统, 简单的显示value就行了
     return new Response(value, {
-      headers: {
-          "Content-type": "text/plain;charset=UTF-8;",
-        },
+      headers: response_header_plain,
     })
   }
 }
